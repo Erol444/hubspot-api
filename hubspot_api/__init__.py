@@ -1,4 +1,3 @@
-from .classes.assignee import Assignee
 from .classes.message import Message
 from .classes.threads import Thread
 from .conversations import Conversations

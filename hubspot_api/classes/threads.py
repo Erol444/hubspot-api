@@ -3,7 +3,7 @@ import json
 import uuid
 from datetime import datetime
 from hubspot_api.api_client import ApiClient
-from .assignee import Assignee
+from .agents import Agent
 from .message import Message
 from .ably import Ably
 import re
@@ -145,7 +145,7 @@ class Thread:
         self.details = json.loads(response.text)
         return self.details
 
-    def assign(self, assignee: Assignee):
+    def assign(self, assignee: Agent):
         """
         Assign the thread to an agent
         """

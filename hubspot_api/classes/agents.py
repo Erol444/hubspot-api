@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-class Assignee:
+class Agent:
     """
     An agent inside your company that you can assign tickets to
     """
@@ -18,20 +18,25 @@ class Assignee:
         self.salesPro = raw['salesPro']
         self.activationStatus = raw['activationStatus']
 
-class Assignees:
-    """
-    List of Assignees (Agents) inside your company that you can assign tickets to
-    """
-    def __init__(self, assignees: Dict):
-        self.list = [Assignee(a) for a in assignees['results']]
+    # Override str
+    def __str__(self):
+        name = f"{self.firstName} {self.lastName}"
+        return f'<strong data-at-mention data-user-id="{self.userId}" data-search-text="{name}" data-search-value="{self.email}">@{name}</strong>'
 
-    def find(self, assignee) -> Assignee:
+class Agents:
+    """
+    List of Agents (possible assignees) inside your company that you can assign tickets to
+    """
+    def __init__(self, agents: Dict):
+        self.list = [Agent(a) for a in agents['results']]
+
+    def find(self, agent: str) -> Agent:
         """
         Pass either Name+Surname, or the email of the assignee
         """
         for a in self.list:
-            if a.email == assignee:
+            if a.email == agent:
                 return a
-            if f'{a.firstName} {a.lastName}' == assignee:
+            if f'{a.firstName} {a.lastName}' == agent:
                 return a
         return None

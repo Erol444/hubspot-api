@@ -7,7 +7,7 @@ long_description = readme_file.read_text(encoding='utf-8')
 
 setup(
     name="hubspot-api",
-    version="0.1.1",
+    version="0.1.2",
     description="Python library to interact with HubSpot's Private API",
     long_description=long_description,
     long_description_content_type='text/markdown',

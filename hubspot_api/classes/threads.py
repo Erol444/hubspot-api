@@ -5,6 +5,9 @@ from datetime import datetime
 from hubspot_api.api_client import ApiClient
 from .assignee import Assignee
 from .message import Message
+from .ably import Ably
+import re
+import time
 
 class Thread:
     def __init__(self, raw: Dict, api: ApiClient):
@@ -17,6 +20,8 @@ class Thread:
         # 1002 = email, 1000 = chat (no subject)
         self.channel = raw['genericChannelId']
         self.details = None
+
+        self.ably: Ably = None
 
         try:
             self.assigned_agent = raw['objectPropertyMap']['0-11']['hs_assigned_agent_id']
@@ -36,6 +41,97 @@ class Thread:
                           data={"status": "ENDED"},
                         )
         return response.status_code == 200
+
+    def _create_ably(self):
+        # First get ably.io token
+        data = {
+            "threadIds": [str(self.id)],
+        }
+        response = self.api.api_call('PUT',
+                          f'/messages/v2/pubsub/token',
+                          data = data
+                        )
+
+        print('create__ably', response.status_code, response.text)
+        self.ably = Ably(response.text)
+
+    def comment(self, text):
+        """
+        Comment on the thread. You can pass HTML text, and tag an agent (assignee) in the text like f"Hey @{assigneeObject}, can you check this?"
+
+        Returns True if the comment was successful
+        """
+        if self.ably is None:
+            self._create_ably()
+
+        if self.details is None:
+            self.read_details()
+
+
+        def plain_text(rich_text):
+            # Remove HTML tags
+            text = re.sub(r'<[^>]+>', '', rich_text)
+            return text
+
+
+        channel = list(filter(lambda x: x['type'] == 'THREAD_PRIVATE', self.details['channels']))[0]
+
+        tag_users = re.findall(r'<strong.*?data-user-id=\"(.*?)\"', text)
+        tag_users = [int(x) for x in tag_users]
+        userId = self.api.login.userId
+
+        randomId = uuid.uuid4().hex
+
+        msg_data = {
+            "@type":"THREAD_COMMENT",
+            "sender": {
+                "@type":"AGENT_SENDER",
+                "id":userId
+            },
+            "senders": [
+                {
+                    "actorId":f"A-{userId}",
+                    "deliveryIdentifier": None,
+                    "senderField": None,
+                    "name":None
+                }
+            ],
+            "timestamp": int(time.time() * 1000),
+            "text": plain_text(text),
+            "richText": text,
+            "hasMore":False,
+            "id": randomId,
+            "status":{
+                "messageStatus":"SENT",
+                "timestamp":None,
+                "sendFailure":None
+            },
+            "attachments":[
+                {
+                    "@type":"MENTIONS",
+                    "userIds": tag_users
+                }
+            ],
+            "messageDeletedStatus":"NOT_DELETED",
+            "clientType":"MOBILE",
+            "genericChannelId":None
+        }
+        data = [
+            {
+                "action": 15,
+                "channel": channel['name'],
+                "messages": [
+                    {
+                        "data": json.dumps(msg_data),
+                        "id": randomId,
+                        "name": "1"
+                    }
+                ],
+                "msgSerial": 1
+            }
+        ]
+        res = self.ably.publish(data)
+        return res.status_code == 201
 
     def read_details(self) -> Dict:
         """

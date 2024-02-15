@@ -17,7 +17,7 @@ class Login:
             with open('login.pkl', 'rb') as file:
                 vals = pickle.load(file)
 
-                def parse_cookies(cookie_string):
+                def parse_cookies(cookie_string) -> requests.cookies.RequestsCookieJar:
                     cookie_jar = requests.cookies.RequestsCookieJar()
                     # Split the string into individual cookie strings
                     cookies = cookie_string.split(", ")

@@ -12,8 +12,14 @@ hs = HubSpotApi(os.getenv("HS_EMAIL"), os.getenv("HS_PASSWORD"), cb_auth)
 
 # Assignees / Agents inside the company that you can assign tickets to
 agents = hs.conversations.get_agents()
+threads = hs.conversations.get_threads()
 
-threads = hs.conversations.get_unassigned_threads()
-if 0 < len(threads):
-    johnDoe = agents.find("John Doe")
-    threads[0].assign(johnDoe)
+if len(threads) == 0:
+    raise Exception('No Conversation threads found!')
+
+thread = threads[0]
+thread.comment('Hello, this is a test comment')
+
+# Tagging an agent is also supported
+agent = agents.find('John Doe')
+thread.comment(f'Hi {agent}, could you please look into this?')

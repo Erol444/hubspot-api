@@ -3,7 +3,7 @@ import logging
 from typing import List
 from .api_client import ApiClient
 from .classes.threads import Thread
-from .classes.assignee import Assignees
+from .classes.agents import Agents
 
 class Conversations:
     def __init__(self, api_client: ApiClient):
@@ -11,7 +11,7 @@ class Conversations:
 
         self.inboxes = self.__put_inbox()
         self.inboxId = None
-        self.assignees: Assignees = None
+        self.agents: Agents = None
 
         if len(self.inboxes) == 0:
             raise Exception("No inboxes found")
@@ -26,9 +26,9 @@ class Conversations:
     def set_inbox(self, id: int):
         self.inboxId = self.inboxes[id]["id"]
 
-    def get_assignees(self) -> Assignees:
-        if self.assignees is not None:
-            return self.assignees
+    def get_agents(self) -> Agents:
+        if self.agents is not None:
+            return self.agents
 
         response = self.api.api_call('GET',
             '/cv/inbox/settings/v1/assignee-search',
@@ -38,9 +38,9 @@ class Conversations:
                 'offset': 0,
             }
         )
-        assignees = json.loads(response.text)
-        self.assignees = Assignees(assignees)
-        return self.assignees
+        agents = json.loads(response.text)
+        self.agents = Agents(agents)
+        return self.agents
 
     def get_unassigned_threads(self) -> List[Thread]:
         threads = self.get_threads(status=["STARTED"])

@@ -10,6 +10,7 @@ It was developed because **HubSpot doesn't bother making their Public API featur
 
 - Conversation: access Live Chat channels
 - Conversation: Assign the conversation to an agent
+- Conversation: Tag an agent inside a comment
 
 ## Demo script
 
@@ -25,7 +26,7 @@ hs = HubSpotApi('my-email@provider.com', 'superSecretPw', cb_auth)
 # You can also do hs.conversations.get_threads() to get all threads
 threads = hs.conversations.get_unassigned_threads()
 # Needed for assigning threads to agents
-assignees = hs.conversations.get_assignees()
+agents = hs.conversations.get_agents()
 
 for t in threads:
     print('---------\nSubject:',t.subject, t.timestamp)
@@ -36,15 +37,19 @@ for t in threads:
     # Do some smart LLM stuff here
 
     if "api" in full_conversation or "code" in full_conversation:
-        t.assign(assignees.find('John Doe')) # Tech support
+        t.assign(agents.find('John Doe')) # Tech support
     elif "shipping" in full_conversation:
-        t.assign(assignees.find('Erik The Red')) # Ops/shipping
+        t.assign(agents.find('Erik The Red')) # Ops/shipping
     elif "digital agency" in full_conversation:
         # They are trying to sell us something
         t.send_message("Thank you for your email, but we are not interested.")
         t.close()
     elif "tiktok" in full_conversation:
         t.spam() # TikTok? Spam for sure
+    else:
+        # Writing a comment (and tagging an agent) is also supported
+        agent = agents.find('John Doe')
+        t.comment(f'Hi {agent}, could you assign this to the best person?')
 ```
 
 ## Module support

@@ -2,13 +2,25 @@ import requests
 from typing import Dict
 from .login import Login
 
+
+class ApiResponse:
+    def __init__(self, response: requests.Response):
+        self.raw = response
+        self.text = response.text
+        self.data: Dict = response.json()
+        self.status_code: int = response.status_code
+
 class ApiClient:
     def __init__(self, login: Login):
         self.login = login
         self.update_headers()
 
-    def api_call(self, method: str, endpoint: str, params: Dict = None, data: Dict = None):
-        url = self.login.domain.replace('app', 'api') + endpoint
+    def api_call(self, method: str, endpoint: str, params: Dict = None, data: Dict = None) -> ApiResponse:
+
+        if endpoint.startswith('https://'):
+            url = endpoint
+        else:
+            url = self.login.domain.replace('app', 'api') + endpoint
 
         if params == None:
             params = dict()
@@ -16,13 +28,23 @@ class ApiClient:
 
         # print(f'Sending {method} request to {url}, params: {params}')
 
-        response = requests.request(method,
+        reqRes = requests.request(method,
                                     url,
                                     headers=self.headers,
                                     json=data,
                                     cookies=self.login.cookie_jar,
                                     params=params)
-        return response
+        res = ApiResponse(reqRes)
+
+        # Check if the request was successful - if status_code is 2xx
+        if res.status_code // 100 != 2:
+            # Check status message
+            if res.data['status'] == 'error' and res.data['message'] == 'Cookie has been invalidated. Please log in again.':
+                print('Cookie has been invalidated. Please log in again.')
+                self.login.login()
+                self.update_headers()
+                return self.api_call(method, endpoint, params, data)
+        return res
 
     def update_headers(self):
         self.headers = {

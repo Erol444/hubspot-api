@@ -20,8 +20,10 @@ class Message:
         self.to = []
         self.cc = []
         # Check if self.raw has ['recipients']
-        if self.raw['recipients'] is not None:
+        if self.raw['recipients']:
             for recipient in self.raw['recipients']:
+                if 'recipientField' not in recipient:
+                    continue
                 if recipient['recipientField'] == 'TO':
                     self.to.append(recipient['deliveryIdentifier']['value'])
                 elif recipient['recipientField'] == 'CC':

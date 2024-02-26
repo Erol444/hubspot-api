@@ -18,10 +18,12 @@ class Agent:
         self.salesPro = raw['salesPro']
         self.activationStatus = raw['activationStatus']
 
+    def full_name(self) -> str:
+        return f"{self.firstName} {self.lastName}"
+
     # Override str
     def __str__(self):
-        name = f"{self.firstName} {self.lastName}"
-        return f'<strong data-at-mention data-user-id="{self.userId}" data-search-text="{name}" data-search-value="{self.email}">@{name}</strong>'
+        return f'<strong data-at-mention data-user-id="{self.userId}" data-search-text="{self.full_name()}" data-search-value="{self.email}">@{self.full_name()}</strong>'
 
 class Agents:
     """
@@ -29,6 +31,12 @@ class Agents:
     """
     def __init__(self, agents: Dict):
         self.list = [Agent(a) for a in agents['results']]
+
+    def from_id(self, userId: int) -> Agent:
+        for a in self.list:
+            if a.userId == userId:
+                return a
+        return None
 
     def find(self, agent: str) -> Agent:
         """

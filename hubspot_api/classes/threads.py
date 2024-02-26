@@ -11,25 +11,34 @@ import time
 
 class Thread:
     def __init__(self, raw: Dict, api: ApiClient):
-        self.raw = raw
         self.api = api
 
-        self.id = raw['objectKey']['threadId']
-        self.subject = raw['subject']
-        self.status = raw['threadStatus']
-        # 1002 = email, 1000 = chat (no subject)
-        self.channel = raw['genericChannelId']
-        self.details = None
+        if 'threadId' in raw:
+            # From v2/threadlist
+            self.id = raw['threadId']
+            emailMetadata = raw['latestMessagePreview']['emailMetadata']
+            self.subject = emailMetadata['subject'] if emailMetadata else None
+            self.status = raw['status']
+            self.channel = raw['originalGenericChannelId']
+            try:
+                self.assigned_agent = raw['assignee']['agentId']
+            except:
+                self.assigned_agent = None
+            self.timestamp = datetime.fromtimestamp(raw['latestMessageTimestamp'] / 1000)
+        else:
+            self.id = raw['objectKey']['threadId']
+            self.subject = raw['subject']
+            self.status = raw['threadStatus']
+            # 1002 = email, 1000 = chat (no subject)
+            self.channel = raw['genericChannelId']
+            try:
+                self.assigned_agent = raw['objectPropertyMap']['0-11']['hs_assigned_agent_id']
+            except:
+                self.assigned_agent = None
+            self.timestamp = datetime.fromtimestamp(raw['latestMessageTimestamp'] / 1000)
 
+        self.details: Dict = None
         self.ably: Ably = None
-
-        try:
-            self.assigned_agent = raw['objectPropertyMap']['0-11']['hs_assigned_agent_id']
-        except:
-            self.assigned_agent = None
-
-        self.inboxId = raw['objectPropertyMap']['0-11']['hs_inbox_id']
-        self.timestamp = datetime.fromtimestamp(raw['latestMessageTimestamp'] / 1000)
 
     def close(self) -> bool:
         """
@@ -52,7 +61,6 @@ class Thread:
                           data = data
                         )
 
-        print('create__ably', response.status_code, response.text)
         self.ably = Ably(response.text)
 
     def comment(self, text):
@@ -61,6 +69,9 @@ class Thread:
 
         Returns True if the comment was successful
         """
+        if not text: # Empty string
+            return False
+
         if self.ably is None:
             self._create_ably()
 
@@ -142,7 +153,7 @@ class Thread:
                           params={'expectedResponseType':'WRAPPER_V2', 'includeDeletedHistory':False, 'historyLimit':100},
                         )
 
-        self.details = json.loads(response.text)
+        self.details = response.data
         return self.details
 
     def assign(self, assignee: Agent):
@@ -159,7 +170,7 @@ class Thread:
             f'/conversations-assignments/v1/assignments/{self.id}',
             data=data
         )
-        print(response, response.text)
+        print(response.status_code, response.text)
 
     def spam(self, deleteContact: bool = True):
         data = {

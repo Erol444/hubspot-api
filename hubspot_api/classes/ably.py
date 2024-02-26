@@ -49,7 +49,6 @@ class Ably:
                                     headers=self.headers,
                                     data=self.json
                                     )
-        print('get_token',response.status_code, response.text)
         data = json.loads(response.text)
         return data['token']
 
@@ -61,7 +60,6 @@ class Ably:
                                     f"https://hubspot-eu-rest.ably.io/comet/connect?access_token={self.token}&stream=false&heartbeats=false&v=2&agent=ably-js%252F1.2.43%2520browser&rnd={self.__get_rnd()}",
                                     headers=self.headers
                                     )
-        print('connect',response.status_code, response.text)
         data = json.loads(response.text)
         return data[0]['connectionDetails']['connectionKey']
 

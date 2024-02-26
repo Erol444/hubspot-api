@@ -19,6 +19,10 @@ if len(threads) == 0:
 messages = threads[0].read_messages()
 print(f"Thread subject {threads[0].subject}\n")
 
+if messages[0].has_history():
+    history_txt = messages[0].get_history()
+    print(f"-------\nFirst message history: {history_txt}\n")
+
 for i, msg in enumerate(messages):
     # Older messages are at the back (higher i num)
     print(f"----------\n{i}. message from {msg.fromEmail} at {msg.timestamp}, to {msg.to}, cc-ed {msg.cc}, text: \n{msg.text}")

@@ -66,7 +66,6 @@ class Login:
 
         # If we need additional verification, call the callbacks
         parsed_response = json.loads(response.text)
-        print('login resposne', parsed_response)
 
 
         # TWO_FACTOR_ENFORCED_ON_HUB

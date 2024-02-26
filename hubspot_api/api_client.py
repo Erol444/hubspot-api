@@ -26,8 +26,6 @@ class ApiClient:
             params = dict()
         params['portalId'] = self.login.portalId
 
-        # print(f'Sending {method} request to {url}, params: {params}')
-
         reqRes = requests.request(method,
                                     url,
                                     headers=self.headers,

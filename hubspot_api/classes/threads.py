@@ -186,22 +186,21 @@ class Thread:
 
     def read_messages(self) -> List[Message]:
         """
-        Get all messages in the thread
+        Gets all messages in the thread. First message in the list is the oldest one.
         """
         data = self.read_details()
-
-        with open(f'get_conversation.json', 'w', encoding='utf-8') as file:
-            file.write(json.dumps(data, indent=4))
 
         messages: List[Message] = []
         for msg in data['recentHistory']['messages']['results']:
             if msg['@type'] in ['THREAD_STATUS_UPDATE', 'CONTEXT_UPDATE', 'CRM_OBJECT_LIFECYCLE_UPDATE', 'TYPICAL_RESPONSE_TIME', 'INITIAL_MESSAGE']:
                 continue
             elif msg['@type'] in ['COMMON_MESSAGE']:
-                messages.append(Message(msg, data['recentHistory']))
+                messages.append(Message(msg, data['recentHistory']['friendlyNameResults'], self.id, api=self.api))
             else:
                 print('Unknown type', msg['@type'])
 
+        # Reorder messages
+        messages.sort(key=lambda x: x.timestamp)
         return messages
 
     def send_message(self, text: str):

@@ -162,3 +162,5 @@ cython_debug/
 login.pkl
 .pypirc
 .env
+
+example/**/*.json

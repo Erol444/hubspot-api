@@ -96,7 +96,7 @@ class Conversations:
 
             response = self.api.api_call(
                 "PUT",
-                "https://app-eu1.hubspot.com/api/messages/v2/threadlist/members/page",
+                f"{self.api.login.domain}/api/messages/v2/threadlist/members/page",
                 params=params,
                 data=data
             )
@@ -124,7 +124,7 @@ class Conversations:
         with open(f'threadslist.json', 'w', encoding='utf-8') as file:
             file.write(response.text)
 
-        return [Thread(result, self.api) for result in results]
+        return [Thread.from_dict(result, self.api) for result in results]
 
     def has_more(self) -> bool:
         """

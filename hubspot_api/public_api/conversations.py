@@ -17,7 +17,7 @@ class Conversations:
     def get_inboxes(self) -> dict:
         """
         returns:
-            {"total":1,"results":[{"id":"74281021","name":"Inbox","createdAt":"2021-11-23T11:32:14.501Z","updatedAt":"2023-05-11T20:01:05.259Z"}]}
+            {"total":1,"results":[{"id":"123123","name":"Inbox","createdAt":"2021-11-11T11:32:14.501Z","updatedAt":"2023-05-11T20:01:05.259Z"}]}
         """
         url = "/conversations/v3/conversations/inboxes"
         json_text = self.send_request(url, "GET").text

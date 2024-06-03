@@ -62,8 +62,7 @@ class MessageBase:
     """
     Can be multiple senders, if the message was forwarded
     [
-        SenderRecipient(name=None, actorId='V-14511701', senderField='ORIGINAL_FROM', recipientField=None, deliveryIdentifier={'type': 'HS_EMAIL_ADDRESS', 'value': 'noreply@extendedforms.io'}),
-        SenderRecipient(name='Pavel Svatoš', actorId=None, senderField='FROM', recipientField=None, deliveryIdentifier={'type': 'HS_EMAIL_ADDRESS', 'value': 'pavel.svatos@centrum.cz'})
+        SenderRecipient(name=None, actorId='V-14511701', senderField='ORIGINAL_FROM', recipientField=None, deliveryIdentifier={'type': 'HS_EMAIL_ADDRESS', 'value': 'something@something.com'}),
     ]
     """
     senders: List[SenderRecipient]

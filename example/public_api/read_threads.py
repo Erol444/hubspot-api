@@ -5,7 +5,6 @@ load_dotenv()
 
 hs = Api(os.getenv("HS_API_KEY"))
 
-# Last 150 days: MTcwOTg0NDg4NDI4Ni0zNDYwMjI5NjIx
 while hs.conversations.has_more():
     threads = hs.conversations.get_threads(minute_threshold=60*24*30)
     for t in threads:

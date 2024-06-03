@@ -78,7 +78,7 @@ class Conversations:
         # Check in agents.json
         if use_cached and self.agents is None:
             try:
-                with open('agents.json', 'r') as f:
+                with open('public_api_agents.json', 'r') as f:
                     self.agents = json.load(f)
             except:
                 self.agents = None
@@ -87,7 +87,7 @@ class Conversations:
             res = self.api.api_call("GET", "/crm/v3/owners")
             self.agents = res.data
             # Save to agents.json
-            with open('agents.json', 'w') as f:
+            with open('public_api_agents.json', 'w') as f:
                 json.dump(self.agents, f)
 
         return Agents.from_dict(self.agents)

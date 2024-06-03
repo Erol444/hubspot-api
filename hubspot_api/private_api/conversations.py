@@ -121,10 +121,14 @@ class Conversations:
         else:
             self._search_offset = False
 
-        with open(f'threadslist.json', 'w', encoding='utf-8') as file:
-            file.write(response.text)
+        # with open(f'threadslist.json', 'w', encoding='utf-8') as file:
+        #     file.write(response.text)
 
         return [Thread.from_dict(result, self.api) for result in results]
+
+    def get_thread_by_id(self, id: int) -> Thread:
+        response = self.api.api_call("GET", f"/conversations-threads/v1/threads/{id}")
+        return Thread.from_id(response.data, self.api)
 
     def has_more(self) -> bool:
         """

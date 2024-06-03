@@ -8,6 +8,7 @@ class Agent:
     firstName: str
     lastName: str
     userId: int
+    userIdIncludingInactive: int
     createdAt: str
     updatedAt: str
     archived: bool

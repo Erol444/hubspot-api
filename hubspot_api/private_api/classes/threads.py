@@ -52,6 +52,16 @@ class Thread:
             t.timestamp = datetime.fromtimestamp(data['latestMessageTimestamp'] / 1000)
         return t
 
+    @staticmethod
+    def from_id(data: dict, api: ApiClient):
+        t = Thread(data['id'], api)
+        # t.subject = data['subject']
+        t.status = data['threadStatus']
+        # 1002 = email, 1000 = chat (no subject)
+        t.channel = data['originalGenericChannelId']
+        t.timestamp = datetime.fromtimestamp(data['latestMessageTimestamp'] / 1000)
+        return t
+
     def close(self) -> bool:
         """
         Close the thread
@@ -157,7 +167,7 @@ class Thread:
                           f'/messages/v2/threadlist/member/{self.id}/details',
                           params={'expectedResponseType':'WRAPPER_V2', 'includeDeletedHistory':False, 'historyLimit':100},
                         )
-        
+
         # Write to conversation_details.json
         with open(f'conversation_details.json', 'w', encoding='utf-8') as file:
             file.write(response.text)

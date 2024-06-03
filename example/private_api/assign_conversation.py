@@ -1,4 +1,4 @@
-from hubspot_api import HubSpotApi
+from hubspot_api import PrivateApi
 import os
 
 from dotenv import load_dotenv
@@ -8,7 +8,7 @@ def cb_auth() -> str:
     code = input('Enter 2FA code: ')
     return code
 
-hs = HubSpotApi(os.getenv("HS_EMAIL"), os.getenv("HS_PASSWORD"), cb_auth)
+hs = PrivateApi(os.getenv("HS_EMAIL"), os.getenv("HS_PASSWORD"), cb_auth)
 
 # Assignees / Agents inside the company that you can assign tickets to
 agents = hs.conversations.get_agents()

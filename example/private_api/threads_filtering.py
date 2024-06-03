@@ -1,4 +1,4 @@
-from hubspot_api import HubSpotApi
+from hubspot_api import PrivateApi
 import os
 from datetime import datetime
 from dotenv import load_dotenv
@@ -13,7 +13,7 @@ def cb_auth() -> str:
     code = input('Enter 2FA code: ')
     return code
 
-hs = HubSpotApi(os.getenv("HS_EMAIL"), os.getenv("HS_PASSWORD"), cb_auth)
+hs = PrivateApi(os.getenv("HS_EMAIL"), os.getenv("HS_PASSWORD"), cb_auth)
 agents = hs.conversations.get_agents()
 
 while hs.conversations.has_more():

@@ -1,20 +1,22 @@
 from typing import List, Dict
 from datetime import datetime
-from hubspot_api.api_client import ApiClient
-
+from hubspot_api.private_api.api_client import ApiClient
+from markdownify import markdownify as md
 
 def remove_unsubscribe(text: str) -> str:
     # From google groups
     unsubs = [
-        """-- 
-To unsubscribe from this group and stop receiving emails from it, send an email to""",
-        """-- 
-You received this message because you are subscribed to the""",
+        """To unsubscribe from this group and stop receiving emails from it, send an email to""",
+        """You received this message because you are subscribed to the""",
     ]
     for unsub in unsubs:
         if text.find(unsub) != -1:
             text = text[:text.find(unsub)]
     text = text.strip()
+
+    # Make sure there's no \n\n as well.
+    while "\n\n" in text:
+        text = text.replace("\n\n", "\n")
     return text
 
 class Message:
@@ -35,7 +37,7 @@ class Message:
         except:
             self.fromEmail = None
 
-        self.text = remove_unsubscribe(msg['text'])
+        self.text = remove_unsubscribe(md(msg['richText']) if 'richText' in msg else msg['text'])
 
         self.to = []
         self.cc = []

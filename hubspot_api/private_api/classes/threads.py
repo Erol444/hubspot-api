@@ -2,7 +2,8 @@ from typing import List, Dict
 import json
 import uuid
 from datetime import datetime
-from hubspot_api.api_client import ApiClient
+
+from hubspot_api.private_api.api_client import ApiClient
 from .agents import Agent
 from .message import Message
 from .ably import Ably
@@ -10,35 +11,46 @@ import re
 import time
 
 class Thread:
-    def __init__(self, raw: Dict, api: ApiClient):
+    def __init__(self, id: int, api: ApiClient):
         self.api = api
+        self.id = id
 
-        if 'threadId' in raw:
-            # From v2/threadlist
-            self.id = raw['threadId']
-            emailMetadata = raw['latestMessagePreview']['emailMetadata']
-            self.subject = emailMetadata['subject'] if emailMetadata else None
-            self.status = raw['status']
-            self.channel = raw['originalGenericChannelId']
-            try:
-                self.assigned_agent = raw['assignee']['agentId']
-            except:
-                self.assigned_agent = None
-            self.timestamp = datetime.fromtimestamp(raw['latestMessageTimestamp'] / 1000)
-        else:
-            self.id = raw['objectKey']['threadId']
-            self.subject = raw['subject']
-            self.status = raw['threadStatus']
-            # 1002 = email, 1000 = chat (no subject)
-            self.channel = raw['genericChannelId']
-            try:
-                self.assigned_agent = raw['objectPropertyMap']['0-11']['hs_assigned_agent_id']
-            except:
-                self.assigned_agent = None
-            self.timestamp = datetime.fromtimestamp(raw['latestMessageTimestamp'] / 1000)
+        # Will get filled in from read_details
+        self.subject = None
+        self.status = None
+        self.channel = None
+        self.assigned_agent = None
+        self.timestamp = None
 
         self.details: Dict = None
         self.ably: Ably = None
+
+    @staticmethod
+    def from_dict(data: dict, api: ApiClient):
+        if 'threadId' in data:
+            t = Thread(data['threadId'], api)
+            # From v2/threadlist
+            emailMetadata = data['latestMessagePreview']['emailMetadata']
+            t.subject = emailMetadata['subject'] if emailMetadata else None
+            t.status = data['status']
+            t.channel = data['originalGenericChannelId']
+            try:
+                t.assigned_agent = data['assignee']['agentId']
+            except:
+                t.assigned_agent = None
+            t.timestamp = datetime.fromtimestamp(data['latestMessageTimestamp'] / 1000)
+        else:
+            t = Thread(data['objectKey']['threadId'], api)
+            t.subject = data['subject']
+            t.status = data['threadStatus']
+            # 1002 = email, 1000 = chat (no subject)
+            t.channel = data['genericChannelId']
+            try:
+                t.assigned_agent = data['objectPropertyMap']['0-11']['hs_assigned_agent_id']
+            except:
+                t.assigned_agent = None
+            t.timestamp = datetime.fromtimestamp(data['latestMessageTimestamp'] / 1000)
+        return t
 
     def close(self) -> bool:
         """
@@ -63,13 +75,13 @@ class Thread:
 
         self.ably = Ably(response.text)
 
-    def comment(self, text):
+    def comment(self, rich_text, plain_text):
         """
         Comment on the thread. You can pass HTML text, and tag an agent (assignee) in the text like f"Hey @{assigneeObject}, can you check this?"
 
         Returns True if the comment was successful
         """
-        if not text: # Empty string
+        if not rich_text or not plain_text: # Empty string
             return False
 
         if self.ably is None:
@@ -78,16 +90,9 @@ class Thread:
         if self.details is None:
             self.read_details()
 
-
-        def plain_text(rich_text):
-            # Remove HTML tags
-            text = re.sub(r'<[^>]+>', '', rich_text)
-            return text
-
-
         channel = list(filter(lambda x: x['type'] == 'THREAD_PRIVATE', self.details['channels']))[0]
 
-        tag_users = re.findall(r'<strong.*?data-user-id=\"(.*?)\"', text)
+        tag_users = re.findall(r'<strong.*?data-user-id=\"(.*?)\"', rich_text)
         tag_users = [int(x) for x in tag_users]
         userId = self.api.login.userId
 
@@ -108,8 +113,8 @@ class Thread:
                 }
             ],
             "timestamp": int(time.time() * 1000),
-            "text": plain_text(text),
-            "richText": text,
+            "text": plain_text,
+            "richText": rich_text,
             "hasMore":False,
             "id": randomId,
             "status":{
@@ -152,8 +157,18 @@ class Thread:
                           f'/messages/v2/threadlist/member/{self.id}/details',
                           params={'expectedResponseType':'WRAPPER_V2', 'includeDeletedHistory':False, 'historyLimit':100},
                         )
-
+        
+        # Write to conversation_details.json
+        with open(f'conversation_details.json', 'w', encoding='utf-8') as file:
+            file.write(response.text)
         self.details = response.data
+        metadata = response.data['latestMessagePreview']['emailMetadata']
+        self.subject = metadata['subject'] if metadata else None
+        self.status = response.data['status']
+        self.channel = response.data['genericChannelsUsed'][0]['genericChannelId']
+        if response.data['assignee'] is not None:
+            self.assigned_agent = response.data['assignee']['agentId']
+        self.timestamp = response.data['latestMessageTimestamp']
         return self.details
 
     def assign(self, assignee: Agent):

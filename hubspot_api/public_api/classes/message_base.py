@@ -34,6 +34,11 @@ class SenderRecipient:
             result['deliveryIdentifier'] = self.deliveryIdentifier.to_dict()
         return result
 
+    @classmethod
+    def from_dict(cls, data: dict):
+        if 'deliveryIdentifier' in data:
+            data['deliveryIdentifier'] = DeliveryIdentifier(**data['deliveryIdentifier'])
+        return cls(**data)
 
 @dataclass
 class Attachment:
@@ -43,7 +48,7 @@ class Attachment:
     fileId: Optional[str] = None
     url: Optional[str] = None
     fileUsageType: Optional[str] = None
-
+    name: Optional[str] = None
 
 @dataclass
 class MessageBase:
@@ -77,10 +82,10 @@ class MessageBase:
         data["updatedAt"] = parse_datetime(data.get("updatedAt"))
         data["client"] = Client(**data.get("client", {}))
         data["senders"] = [
-            SenderRecipient(**sender) for sender in data.get("senders", [])
+            SenderRecipient.from_dict(sender) for sender in data.get("senders", [])
         ]
         data["recipients"] = [
-            SenderRecipient(**recipient) for recipient in data.get("recipients", [])
+            SenderRecipient.from_dict(recipient) for recipient in data.get("recipients", [])
         ]
         data["attachments"] = [
             Attachment(**attachment) for attachment in data.get("attachments", [])
@@ -91,6 +96,15 @@ class MessageBase:
         if self.createdBy is None:
             return None
         return self.get_actors([self.createdBy]).get(self.createdBy)
+
+    def get_sender_email(self) -> str:
+        """
+        Get email of the sender
+        """
+        try:
+            return list(filter(lambda x: x.senderField == 'FROM', self.senders))[0].deliveryIdentifier.value
+        except IndexError:
+            return 'Unknown'
 
     def get_actors(self, actors: List[str]) -> Dict[str, Actor]:
         if self.api is None:
@@ -114,7 +128,32 @@ class MessageBase:
         return remove_unsubscribe(text)
 
     def from_integration(self) -> bool:
+        """
+        Checks if the message was created by an integration
+        """
         return self.createdBy.startswith('I-')
+
+    def has_attachments(self) -> bool:
+        """
+        Checks if the message has any attachments
+        """
+        return len(self.attachments) > 0
+
+    def serialize_attachments(self) -> str:
+        """
+        Returns a comma-separated list of attachment names
+        """
+        def file_name(attachment: Attachment) -> str:
+            if attachment.type == 'FILE':
+                import urllib.parse as urlparse
+                from urllib.parse import unquote
+                path = urlparse.urlparse(attachment.url).path
+                path = unquote(path)
+                if '/' in path:
+                    path = path.split('/')[-1]
+                return path
+            return "Unknown attachment type " + attachment.type
+        return ", ".join([file_name(a) for a in self.attachments])
 
     def is_newer_than(self, timestamp: datetime) -> bool:
         """
@@ -123,4 +162,11 @@ class MessageBase:
         # Ensure self.createdAt is offset-aware by setting its timezone to UTC
         created_at_aware = self.createdAt.replace(tzinfo=timezone.utc)
         return created_at_aware > timestamp
+
+    def get_hs_link(self) -> str:
+        """
+        Gets url for HubSpot conversation thread
+        """
+        data = self.api.get_acc_info()
+        return f"https://{data['uiDomain']}/live-messages/{data['portalId']}/inbox/{self.conversationsThreadId}#email"
 

@@ -1,11 +1,11 @@
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 
+from markdownify import markdownify as md
 from hubspot_api.private_api.api_client import ApiClient
 from .paging import Paging
 from .message_base import MessageBase
-
-
+from .converter import remove_unsubscribe
 
 def get_agent(actors, id: str) -> str:
     if id is None:
@@ -87,8 +87,9 @@ class Message(MessageBase):
         return self.truncationStatus == "TRUNCATED_TO_MOST_RECENT_REPLY"
 
     def get_history(self) -> str:
-        f"/conversations/v3/conversations/threads/{self.conversationsThreadId}/messages/{self.id}/original-content"
-        pass
+        res = self.api.api_call('GET', f"/conversations/v3/conversations/threads/{self.conversationsThreadId}/messages/{self.id}/original-content")
+        text = md(res.data['richText']) if res.data['richText'] else res.data['text']
+        return remove_unsubscribe(text)
 
     def __str__(self):
         return f"MESSAGE FROM {self.senders[0].name or self.senders[0].actorId} at {self.createdAt.strftime('%Y-%m-%d %H:%M')}:\n{self.get_text()}"
@@ -116,4 +117,4 @@ class Conversation:
             if message_class:
                 results.append(message_class.from_dict(result, api))
 
-        return cls(results=results, paging=Paging.from_dict(data['paging']))
+        return cls(results=results, paging=Paging.from_dict(data.get('paging', None)))

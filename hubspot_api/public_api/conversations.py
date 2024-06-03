@@ -47,19 +47,12 @@ class Conversations:
             'latestMessageTimestampAfter': timestamp.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
             'limit': 50
         }
-        # ts = datetime.now(timezone.utc) - timedelta(minutes=minute_threshold)
-        # params = {
-        #     'sort':'latestMessageTimestamp',
-        #     'latestMessageTimestampAfter':ts.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-        #     'limit': 50
-        # }
         if self.after:
             params['after'] = self.after
         if inboxId:
             params['inboxId'] = inboxId
 
         res = self.api.api_call("GET", "/conversations/v3/conversations/threads", params=params)
-        print(res.data)
 
         threads = Threads.from_dict(res.data, self.api)
 

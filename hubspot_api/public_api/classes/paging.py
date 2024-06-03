@@ -11,6 +11,10 @@ class Paging:
 
     @staticmethod
     def from_dict(data: dict):
+        if data is None:
+            return Paging(
+                next=None
+            )
         return Paging(
             next=PagingNext(
                 after=data["next"]["after"],

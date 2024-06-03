@@ -21,6 +21,8 @@ class Api:
         :param api_key: Your HubSpot API key, like 'pat-eu1-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
         """
         from .public_api.conversations import Conversations
+        from .public_api.crm import Crm
         from .public_api.api_client import ApiClient
         self.api_client = ApiClient(api_key)
         self.conversations = Conversations(self.api_client)
+        self.crm = Crm(self.api_client)

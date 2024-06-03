@@ -1,5 +1,5 @@
 import requests
-from typing import Dict
+from typing import Dict, Any
 
 class ApiResponse:
     def __init__(self, response: requests.Response):
@@ -11,6 +11,7 @@ class ApiResponse:
 class ApiClient:
     def __init__(self, token: str):
         self.token = token
+        self.acc_info = None
 
     def api_call(self, method: str, endpoint: str, params: Dict=None, data: Dict = None, headers: Dict=None) -> ApiResponse:
         if headers == None:
@@ -24,3 +25,9 @@ class ApiClient:
         reqRes = requests.request(method, url, headers=headers, params=params, json=data)
         res = ApiResponse(reqRes)
         return res
+
+    def get_acc_info(self) -> Dict[str, Any]:
+        if self.acc_info:
+            return self.acc_info.data
+        self.acc_info = self.api_call("GET", "/account-info/v3/details")
+        return self.acc_info.data

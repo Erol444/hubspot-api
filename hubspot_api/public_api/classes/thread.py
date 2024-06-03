@@ -19,6 +19,8 @@ class Thread:
     inboxId: str
     associatedContactId: str
     archived: bool
+    originalChannelId: Optional[str] = field(default=None)
+    originalChannelAccountId : Optional[str] = field(default=None)
     messages: List[MessageBase] = field(default_factory=list)
     latestMessageReceivedTimestamp: Optional[datetime] = field(default=None)
     closedAt: Optional[datetime] = field(default=None)
@@ -43,15 +45,30 @@ class Thread:
             updatedAt=parse_datetime(data.get("updatedAt")),
             latestMessageSentTimestamp=parse_datetime(data.get("latestMessageSentTimestamp")),
             assignedTo=data.get("assignedTo"),
+            originalChannelId=data.get("originalChannelId"),
+            originalChannelAccountId=data.get("originalChannelAccountId")
         )
+
+    def get_contact(self) -> 'Contact':
+        """
+        Get contact associated with the thread
+        """
+        return self.api.get_contact(self.associatedContactId)
+
+    def get_hs_link(self) -> str:
+        """
+        Gets url for HubSpot conversation thread
+        """
+        data = self.api.get_acc_info()
+        return f"https://{data['uiDomain']}/live-messages/{data['portalId']}/inbox/{self.id}#email"
 
     def latest_message(self) -> Message:
         """
         Gets latest message
         """
         if len(self.messages) == 0:
-            self.read_all()
-        messages = [x for x in self.read_all() if isinstance(x, Message)]
+            self.messages = self.read_all()
+        messages = [x for x in self.messages if isinstance(x, Message)]
         return messages[0]
 
     def read_all(self) -> List[MessageBase]:
@@ -63,9 +80,16 @@ class Thread:
         self.messages = convo.results
         return self.messages
 
-    def read_messages(self) -> List[Message]:
-        # Filter out Message type from the results
-        return [x for x in self.read_all() if isinstance(x, Message)]
+    def read_messages(self, oldest_first=False) -> List[Message]:
+        """
+        Get only messages from the thread. By default, first message in the list is the newest one.
+        Args:
+            oldest_first (bool): If True, oldest message will be first in the list
+        """
+        msgs = [x for x in self.read_all() if isinstance(x, Message)]
+        if oldest_first:
+            msgs.reverse()
+        return msgs
 
     def send_message(self, from_agent: Agent, text: str):
         """

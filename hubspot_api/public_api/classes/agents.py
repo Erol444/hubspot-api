@@ -26,9 +26,11 @@ class Agents:
         Pass either Name+Surname, or the email of the assignee
         """
         for a in self.list:
-            if a.email == agent:
-                return a
-            if f'{a.firstName} {a.lastName}' == agent:
+            if a.id == agent or \
+                str(a.userId) == agent or \
+                str(a.userId) == agent.replace('A-', '') or \
+                a.email == agent or \
+                f'{a.firstName} {a.lastName}' == agent:
                 return a
         return None
 

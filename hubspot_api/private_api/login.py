@@ -72,7 +72,7 @@ class Login:
         if parsed_response['status'] in ['SUSPICIOUS_USER_MUST_CONFIRM', 'TWO_FACTOR_REQUIRED']:
             url = 'https://api.hubspot.com/login-api/v1/login/mobile/verification-code'
             data = {
-                "email": "erol123444@gmail.com",
+                "email": self.email,
                 "shouldRememberThisDevice": True,
                 "token": parsed_response['token'],
                 "verificationCode": self.verification_code_cb()
@@ -87,7 +87,6 @@ class Login:
             if response.status_code == 400:
                 raise Exception(response.text)
             parsed_response = json.loads(response.text)
-
 
         self.cookie_jar = response.cookies
         self.domain = parsed_response['accounts'][0]['appDomain']

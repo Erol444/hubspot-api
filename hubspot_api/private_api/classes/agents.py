@@ -43,8 +43,6 @@ class Agents:
         Pass either Name+Surname, or the email of the assignee
         """
         for a in self.list:
-            if a.email == agent:
-                return a
-            if f'{a.firstName} {a.lastName}' == agent:
+            if agent in [a.email, f'{a.firstName} {a.lastName}', a.firstName, a.lastName]:
                 return a
         return None

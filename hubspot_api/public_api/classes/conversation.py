@@ -97,7 +97,7 @@ class Message(MessageBase):
 @dataclass
 class Conversation:
     results: List[MessageBase]
-    paging: Dict
+    paging: Paging
 
     @classmethod
     def from_dict(cls, data: dict, api: ApiClient):

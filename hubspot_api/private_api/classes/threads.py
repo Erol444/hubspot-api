@@ -159,6 +159,49 @@ class Thread:
         res = self.ably.publish(data)
         return res.status_code == 201
 
+    def associate_with_contact(self, contact_id: int):
+        """
+        Associate the thread with a contact
+        """
+        randomId = uuid.uuid4().hex
+        if self.ably is None:
+            self._create_ably()
+
+        {
+            "@type": "CONTACT_ASSOCIATION",
+            "id": "48150f19-8e61-45fd-8df8-85daaf66399e",
+            "timestamp": 1733418168347,
+            "echo": False,
+            "messageDeletedStatus": "NOT_DELETED",
+            "attachments": [],
+            "senders": [
+                {
+                    "actorId": "S-hubspot",
+                    "type": "ACTOR_ID"
+                }
+            ],
+            "newVid": 85551,
+            "threadId": 9107376366,
+            "ablyTs": 1733418168347,
+            "clientType": "API"
+        }
+
+        data = [
+            {
+                "action": 15,
+                "messages": [
+                    {
+                        "id": "48150f19-8e61-45fd-8df8-85daaf66399e",
+                        "clientId": "API-default",
+                        "data": json.dumps(msg_data),
+                        "name": "1"
+                    }
+                ]
+            }
+        ]
+        pass
+        
+
     def read_details(self) -> Dict:
         """
         Get the details of the thread
@@ -183,10 +226,10 @@ class Thread:
 
     def assign(self, assignee: Agent):
         """
-        Assign the thread to an agent
+        Assign the thread to an agent. If the agent is None, it will be unassigned.
         """
         data = {
-            "actorId": f"A-{assignee.userId}",
+            "actorId": f"A-{assignee.userId}" if assignee is not None else None,
             "assignmentMethod": "API_AGENT_MANUAL",
             "shouldReassign": True,
             "shouldStartThreadIfStartable": False

@@ -7,7 +7,11 @@ class ApiResponse:
     def __init__(self, response: requests.Response):
         self.raw = response
         self.text = response.text
-        self.data: Dict = response.json()
+        try:
+            self.data: Dict = response.json()
+        except:
+            print('Error parsing response to json')
+            self.data = {}
         self.status_code: int = response.status_code
 
 class ApiClient:
@@ -27,11 +31,11 @@ class ApiClient:
         params['portalId'] = self.login.portalId
 
         reqRes = requests.request(method,
-                                    url,
-                                    headers=self.headers,
-                                    json=data,
-                                    cookies=self.login.cookie_jar,
-                                    params=params)
+                                url,
+                                headers=self.headers,
+                                json=data,
+                                cookies=self.login.cookie_jar,
+                                params=params)
         res = ApiResponse(reqRes)
 
         # Check if the request was successful - if status_code is 2xx

@@ -5,8 +5,12 @@ class ApiResponse:
     def __init__(self, response: requests.Response):
         self.raw = response
         self.text = response.text
-        self.data: Dict = response.json()
         self.status_code: int = response.status_code
+        # If status code doesn't start with 2, don't do .json()
+        if self.status_code // 100 != 2:
+            self.data = None
+        else:
+            self.data: Dict = response.json()
 
 class ApiClient:
     def __init__(self, token: str):

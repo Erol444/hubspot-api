@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 @dataclass
 class Agent:
     id: str
     email: str
+    type: str
     firstName: str
     lastName: str
     userId: int
@@ -12,6 +13,7 @@ class Agent:
     createdAt: str
     updatedAt: str
     archived: bool
+    teams: Optional[Any] = None  # Set default to None
 
 @dataclass
 class Agents:
